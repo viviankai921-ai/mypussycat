@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>薇薇安的資產儀表板</title>
+    <title>薇薇安的資產儀表板 (全台幣版)</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f6; color: #31333F; margin: 0; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -26,11 +26,11 @@
 
 <div class="container">
     <h1>💎 薇薇安的資產領航員</h1>
-    <p style="text-align: center; color: #666;">純網頁版 - 數據自動儲存在瀏覽器中</p>
+    <p style="text-align: center; color: #666;">(複委託台幣計價版)</p>
 
     <div class="grid">
         <div class="card">
-            <label>🇺🇸 美金匯率</label>
+            <label>🇺🇸 美金匯率 (用於計算未來扣款)</label>
             <input type="number" id="usd_rate" value="32.5" step="0.1">
         </div>
         <div class="card">
@@ -39,19 +39,19 @@
         </div>
     </div>
 
-    <h2>1. 股票與基金 (生錢的鵝)</h2>
+    <h2>1. 股票與基金 (全部填台幣市值)</h2>
     <div class="grid">
         <div class="card">
             <label>0050 市值 (TWD)</label>
             <input type="number" id="stock_0050" value="2961">
         </div>
-        <div class="card">
-            <label>QQQM 市值 (USD)</label>
-            <input type="number" id="stock_qqqm" value="0">
+        <div class="card" style="border-left: 4px solid #4CAF50;">
+            <label>QQQM 市值 (台幣)</label>
+            <input type="number" id="stock_qqqm" value="0" placeholder="請填 APP 顯示的台幣">
         </div>
-        <div class="card">
-            <label>VTI 市值 (USD)</label>
-            <input type="number" id="stock_vti" value="160">
+        <div class="card" style="border-left: 4px solid #4CAF50;">
+            <label>VTI 市值 (台幣)</label>
+            <input type="number" id="stock_vti" value="5058" placeholder="請填 APP 顯示的台幣">
         </div>
         <div class="card">
             <label>自選台股合計 (TWD)</label>
@@ -115,15 +115,14 @@
 </div>
 
 <script>
-    // 這裡是用 JavaScript 寫的計算邏輯，取代原本的 Python
     function calculate() {
         // 1. 抓取數值
         let rate = parseFloat(document.getElementById('usd_rate').value) || 32.5;
         let growth = parseFloat(document.getElementById('growth_rate').value) || 6;
         
         let s1 = parseFloat(document.getElementById('stock_0050').value) || 0;
-        let s2 = parseFloat(document.getElementById('stock_qqqm').value) || 0;
-        let s3 = parseFloat(document.getElementById('stock_vti').value) || 0;
+        let s2 = parseFloat(document.getElementById('stock_qqqm').value) || 0; // 現在這裡是台幣了
+        let s3 = parseFloat(document.getElementById('stock_vti').value) || 0;  // 現在這裡是台幣了
         let s4 = parseFloat(document.getElementById('stock_custom').value) || 0;
         
         let cash = parseFloat(document.getElementById('cash_total').value) || 0;
@@ -133,8 +132,8 @@
         let debt = parseFloat(document.getElementById('debt').value) || 0;
         let monthly = 26550;
 
-        // 2. 計算目前狀態
-        let stock_total = s1 + (s2 * rate) + (s3 * rate) + s4;
+        // 2. 計算目前狀態 (不需再乘匯率)
+        let stock_total = s1 + s2 + s3 + s4; 
         let real_cash = cash - client; // 扣掉公款
         let total_assets = stock_total + real_cash + other;
         let net_worth = total_assets - debt;
@@ -150,8 +149,11 @@
         // 4. 計算一年後
         // 股票增長
         let future_stock_old = stock_total * (1 + growth/100);
-        let monthly_invest_vti = 160 * rate;
+        
+        // VTI 定期定額 (每月160美金 -> 轉台幣預測)
+        let monthly_invest_vti = 160 * rate; 
         let future_stock_new = (monthly_invest_vti * 12) * (1 + growth/100/2);
+        
         let future_stock_total = future_stock_old + future_stock_new;
 
         // 負債減少 (粗估利息3.5%)
@@ -160,7 +162,7 @@
         let principal_paid = yearly_pay - interest;
         let future_debt = debt - principal_paid;
 
-        // 現金減少
+        // 現金減少 (扣掉還債 + 買VTI的錢)
         let cash_out = yearly_pay + (monthly_invest_vti * 12);
         let future_cash = real_cash - cash_out;
 
@@ -173,7 +175,7 @@
         let sign = diff >= 0 ? "+" : "";
         document.getElementById('wealth_change').innerText = sign + "$" + diff.toLocaleString('zh-TW', {maximumFractionDigits: 0});
         
-        // 保存數據到瀏覽器，下次打開還在
+        // 保存數據
         saveData();
     }
 
@@ -193,7 +195,6 @@
         calculate();
     }
 
-    // 啟動時讀取數據
     window.onload = loadData;
 </script>
 
